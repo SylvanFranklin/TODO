@@ -18,6 +18,7 @@
     "@motionone/solid": "^10.15.5",
     "@solidjs/meta": "^0.28.2",
     "@solidjs/router": "^0.8.1",
+    "solid-icons": "^1.0.4",
     "solid-js": "^1.6.11",
     "solid-start": "^0.2.23",
     "undici": "^5.15.1"
