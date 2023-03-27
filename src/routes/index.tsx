@@ -1,60 +1,78 @@
-import { createSignal, For } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createSignal, batch, For } from "solid-js";
+import { ImCheckboxChecked, ImCheckboxUnchecked } from "solid-icons/im";
+import { createLocalStore, removeIndex } from "./utils";
+import { FaSolidTrashCan } from "solid-icons/fa";
+import { Motion } from "@motionone/solid";
 
-interface Item {
-  title: string;
-  desc?: string;
-  completed?: boolean;
-}
+type TodoItem = { title: string; done: boolean };
 
-function Item(props: { item: Item }) {
-  const [completed, setCompleted] = createSignal(
-    props.item.completed ? true : false
-  );
+const randomColor = (): string => {
+  return ["bc4749", "f2e8cf", "386641", "6a994e", "a7c957"][
+    Math.floor(Math.random() * 5)
+  ];
+};
 
-  return (
-    <li
-      class="flex flex-row border-4 rounded-md p-4 w-full border-black mt-4"
-      onClick={() => setCompleted(!completed())}
-    >
-      <h2 class="my-auto text-3xl font-bold">{props.item.title}</h2>
-      <button
-        class={`aspect-square border-2 border-black w-10 h-10 my-auto ml-auto ${
-          completed() ? "bg-black" : "bg-white"
-        }`}
-      ></button>
-    </li>
-  );
-}
+export default function Index() {
+  const [newTitle, setTitle] = createSignal("");
+  const [todos, setTodos] = createLocalStore<TodoItem[]>("todos", []);
 
-export default function Home() {
-  const [items, setItems] = createStore([]);
-  const [formValue, setFormValue] = createSignal("");
-  const addTODO = (e: SubmitEvent) => {
+  const addTodo = (e: SubmitEvent) => {
     e.preventDefault();
-    setItems([...items, { title: formValue() }]);
-    setFormValue("");
+    batch(() => {
+      setTodos(todos.length, {
+        title: newTitle(),
+        done: false,
+      });
+      setTitle("");
+    });
   };
 
   return (
-    <main class="w-full mt-20">
-      <div class="w-1/2 mx-auto p-4">
-        <form class="mb-3 flex flex-row" onSubmit={(e) => addTODO(e)}>
+    <main class="w-full flex font-mono">
+      <div class="mx-auto mt-20  p-8 w-2/3">
+        <form onSubmit={addTodo} class="flex flex-row">
           <input
-            type="text"
-            value={formValue()}
-            onInput={(e) => setFormValue(e.currentTarget.value)}
-            class="text-2xl border-b-2 w-full outline-none pt-4"
+            required
+            class="outline-none w-full mx-auto text-3xl border-b-8"
             autofocus
+            value={newTitle()}
+            onInput={(e) => setTitle(e.currentTarget.value)}
           />
-          <button
-            type="submit"
-            class="bg-slate-800 p-4 text-white font-bold text-2xl ml-3"
-          >
-            Submit
-          </button>
         </form>
-        <For each={items}>{(item: Item) => <Item item={item} />}</For>
+        <div class="grid mt-20 space-y-4">
+          <For each={todos}>
+            {(todo, i) => (
+              <div class="mx-auto flex flex-row rounded-md p-4 bg-gray-100">
+                <input
+                  class="font-bold font-mono text-3xl outline-none bg-transparent "
+                  type="text"
+                  value={todo.title}
+                  onChange={(e) =>
+                    setTodos(i(), "title", e.currentTarget.value)
+                  }
+                />
+                <Motion.button
+                  class={`mr-3 rounded-md`}
+                  onClick={() => setTodos(i(), "done", !todo.done)}
+                >
+                  {todo.done ? (
+                    <ImCheckboxChecked class="text-3xl" />
+                  ) : (
+                    <ImCheckboxUnchecked class="text-3xl" />
+                  )}
+                </Motion.button>
+                <button
+                  onClick={() => {
+                    setTodos((t) => removeIndex(t, i()));
+                  }}
+                  class="text-red-500"
+                >
+                  <FaSolidTrashCan class="text-3xl" />
+                </button>
+              </div>
+            )}
+          </For>
+        </div>
       </div>
     </main>
   );
